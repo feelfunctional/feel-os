@@ -1,18 +1,21 @@
 /* ============================================================
-   FEEL OS · cargar cafeterías de Barcelona en el B2B CRM
+   FEEL OS · carga automática de cafeterías de Barcelona
+   en la sección "Cafeterías B2B".
    ------------------------------------------------------------
-   COMO USAR:
-   1. Abre FEEL-OS.html en tu navegador.
-   2. Abre la consola:  Cmd + Option + J  (Mac)  /  F12  (Windows).
-   3. Pega TODO este archivo y pulsa Enter.
-   Es aditivo: no borra nada, salta los que ya existan por nombre,
-   y si tienes Supabase conectado se sincroniza solo.
+   Se carga solo: FEEL-OS.html lo incluye con
+   <script src="cargar-cafeterias-b2b.js"></script>.
+   Espera a que la app y Supabase estén listos, evita duplicados
+   por nombre y solo añade lo que falte (no borra nada).
    ============================================================ */
 (async () => {
-  if (typeof Store === 'undefined') {
-    alert('Abre esto desde la pestaña de FEEL-OS (donde se ve la app).');
-    return;
+  // Carga automática: espera a que la app (Store) esté lista y a que Supabase sincronice.
+  for (let i = 0; i < 80 && (typeof Store === 'undefined' || !Store.list); i++) {
+    await new Promise(r => setTimeout(r, 250));
   }
+  if (typeof Store === 'undefined' || !Store.list) return;
+  await new Promise(r => setTimeout(r, 1500)); // deja que Supabase traiga lo existente
+  if (window.__cafesSeeded) return;            // evita correr dos veces por carga
+  window.__cafesSeeded = true;
 
   const RAW = [
     {title:"Jem Bar Cafeteria Brunch",totalScore:5,reviewsCount:25,street:"Carrer del Taquígraf Serra, 4, Loc 3",city:"Barcelona",phone:"+34 614 89 69 91",categories:["Bar","Cafetería"],url:"https://www.google.com/maps/search/?api=1&query=Jem%20Bar%20Cafeteria%20Brunch&query_place_id=ChIJs0vGrs2ZpBIRip7PTWmgLJ8"},
@@ -101,32 +104,31 @@
   ];
 
   const norm = s => (s||'').toLowerCase().replace(/\s+/g,' ').trim();
-  const existing = new Set(Store.list('b2b').map(b => norm(b.name)));
+  const existing = new Set(Store.list('cafeterias').map(c => norm(c.title)));
 
-  const mapRec = g => {
-    const loc = [g.street, g.city].filter(Boolean).join(', ');
-    const blob = (g.title + ' ' + (g.categories||[]).join(' ')).toLowerCase();
-    const spec = /special|especialidad|roaster|tostad/.test(blob);
-    const notes = [
-      spec ? 'specialty coffee' : null,
-      (g.totalScore != null ? g.totalScore + '★ (' + (g.reviewsCount||0) + ' reseñas)' : null),
-      (g.website ? 'web: ' + g.website : null)
-    ].filter(Boolean).join(' · ');
-    return { name:g.title, contact:'', role:'', phone:g.phone||'', email:'',
-             location:loc, mapUrl:g.url||'', type:'cafe', status:'prospect',
-             lastContact:'', nextAction:'', estVolume:'', notes };
-  };
+  const mapRec = g => ({
+    title: g.title,
+    phone: g.phone || '',
+    city: g.city || '',
+    address: g.street || '',
+    total_score: g.totalScore != null ? g.totalScore : '',
+    reviews_count: g.reviewsCount != null ? g.reviewsCount : '',
+    website: g.website || '',
+    url: g.url || '',
+    contactado: 'no',
+    estado: 'pendiente'
+  });
 
   let added = 0, skipped = 0;
   for (const g of RAW) {
     if (existing.has(norm(g.title))) { skipped++; continue; }
-    await Store.upsert('b2b', mapRec(g));
+    await Store.upsert('cafeterias', mapRec(g));
     existing.add(norm(g.title));
     added++;
   }
+  if (typeof buildSide === 'function') buildSide();
   if (typeof render === 'function') render();
-  const msg = '✅ FEEL OS · B2B CRM\nAñadidas: ' + added + '\nSaltadas (ya existían): ' + skipped + '\nTotal en B2B: ' + Store.list('b2b').length;
+  const msg = '✅ FEEL OS · Cafeterías B2B — Añadidas: ' + added + ' · Saltadas (ya existían): ' + skipped + ' · Total: ' + Store.list('cafeterias').length;
   console.log(msg);
-  if (typeof toast === 'function') toast(added + ' cafeterías añadidas al B2B CRM.');
-  alert(msg);
+  if (added > 0 && typeof toast === 'function') toast(added + ' cafeterías cargadas.');
 })();
