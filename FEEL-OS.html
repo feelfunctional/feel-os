@@ -1,0 +1,1022 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>feel. os</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --cream:#F6F5F0; --cream2:#EDDDC6;
+  --olive:#84763D; --black:#000; --border:#00000022; --border2:#00000033;
+  --neuro:#FF6300; --serenity:#84763D; --hormone:#B75025; --yellow:#E9E15B;
+  --ink:#1a1a1a; --muted:#6b6b63; --muted2:#9a9a90;
+  --card:#ffffff; --bg2:#efeee8; --good:#3B6D11; --warn:#854F0B; --bad:#B42318;
+  --r:16px; --r2:12px; --shadow:0 1px 2px rgba(0,0,0,.04);
+  --font:'Helvetica Neue',Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:var(--font);background:var(--cream);color:var(--ink);font-weight:500;-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.5}
+a{color:inherit}
+button{font-family:var(--font);cursor:pointer;border:none;background:none}
+input,select,textarea{font-family:var(--font);font-size:16px}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#0000001f;border-radius:10px}
+
+/* layout */
+#app{display:flex;min-height:100vh}
+#side{width:248px;flex:0 0 248px;background:#fff;border-right:1px solid var(--border);position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:18px 14px;gap:4px;overflow-y:auto}
+.brandmark{display:flex;align-items:center;gap:10px;padding:6px 8px 16px}
+.brandmark .logo{font-size:30px;font-weight:700;letter-spacing:-.04em;line-height:1}
+.brandmark .dot{width:9px;height:9px;border-radius:50%;background:var(--neuro);margin-bottom:4px}
+.brandmark small{display:block;color:var(--muted);font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+.navgroup{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted2);padding:14px 10px 6px;font-weight:600}
+.nav{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:12px;color:var(--ink);font-size:14.5px;font-weight:600;text-decoration:none;transition:.12s}
+.nav .ic{font-size:17px;width:20px;text-align:center}
+.nav:hover{background:var(--bg2)}
+.nav.active{background:var(--black);color:#fff}
+.nav .badge{margin-left:auto;background:var(--neuro);color:#fff;font-size:11px;font-weight:700;border-radius:20px;padding:1px 7px;min-width:20px;text-align:center}
+.nav.active .badge{background:#fff;color:#000}
+.side-foot{margin-top:auto;padding-top:14px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:7px}
+.syncpill{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);padding:6px 10px;font-weight:600}
+.syncpill .led{width:8px;height:8px;border-radius:50%;background:var(--muted2)}
+.syncpill.on .led{background:var(--good)}
+.syncpill.off .led{background:var(--warn)}
+
+#main{flex:1;min-width:0;display:flex;flex-direction:column}
+#top{position:sticky;top:0;z-index:30;background:rgba(246,245,240,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;padding:12px 22px}
+#burger{display:none;font-size:22px;width:40px;height:40px;border-radius:10px}
+#search{flex:1;max-width:420px;display:flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 14px}
+#search input{border:none;outline:none;width:100%;background:none;font-weight:500}
+#search .k{font-size:11px;color:var(--muted2);border:1px solid var(--border);border-radius:6px;padding:1px 6px;font-weight:600}
+.top-actions{margin-left:auto;display:flex;gap:8px}
+#view{padding:26px 28px 80px;max-width:1180px;width:100%}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.page-head h1{font-size:30px;font-weight:700;letter-spacing:-.03em}
+.page-head p{color:var(--muted);font-size:14px;margin-top:3px;max-width:560px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;background:var(--black);color:#fff;border-radius:12px;padding:12px 18px;font-size:14.5px;font-weight:600;transition:.12s;white-space:nowrap}
+.btn:hover{transform:translateY(-1px)}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--border2)}
+.btn.olive{background:var(--olive)}
+.btn.sm{padding:8px 13px;font-size:13px;border-radius:10px}
+.btn.block{width:100%;justify-content:center}
+.iconbtn{width:40px;height:40px;border-radius:11px;background:#fff;border:1px solid var(--border2);display:inline-flex;align-items:center;justify-content:center;font-size:17px}
+.iconbtn:hover{background:var(--bg2)}
+
+/* cards & grid */
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,1fr)} .g3{grid-template-columns:repeat(3,1fr)} .g4{grid-template-columns:repeat(4,1fr)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--shadow)}
+.card h3{font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:12px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--shadow)}
+.stat .lbl{font-size:12.5px;color:var(--muted);font-weight:600}
+.stat .val{font-size:30px;font-weight:700;letter-spacing:-.03em;margin-top:6px}
+.stat .sub{font-size:12px;color:var(--muted2);margin-top:3px;font-weight:500}
+.stat.accent{color:#fff}
+.pillrow{display:flex;gap:8px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;border-radius:30px;padding:4px 11px;background:var(--bg2);color:var(--ink)}
+.chip.b{background:#E6F1FB;color:#185FA5}.chip.g{background:#EAF3DE;color:#3B6D11}.chip.a{background:#FAEEDA;color:#854F0B}.chip.r{background:#FBE6E4;color:#B42318}.chip.p{background:#EEEDFE;color:#534AB7}.chip.n{background:#eee;color:#555}
+
+/* tables */
+.tablewrap{background:#fff;border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:12px 14px;border-bottom:1px solid var(--border);background:#fcfcfa}
+td{padding:13px 14px;border-bottom:1px solid var(--border);font-weight:500}
+tr:last-child td{border-bottom:none}
+tbody tr{cursor:pointer;transition:.1s}
+tbody tr:hover{background:var(--bg2)}
+.rowmuted{color:var(--muted)}
+
+/* board / kanban */
+.board{display:flex;gap:14px;overflow-x:auto;padding-bottom:10px}
+.bcol{flex:0 0 250px;background:var(--bg2);border-radius:14px;padding:10px}
+.bcol h4{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;padding:6px 8px;display:flex;justify-content:space-between}
+.bcard{background:#fff;border:1px solid var(--border);border-radius:11px;padding:11px 12px;margin-top:8px;cursor:pointer;box-shadow:var(--shadow)}
+.bcard:hover{border-color:var(--black)}
+.bcard .t{font-weight:600;font-size:14px}
+.bcard .m{font-size:12px;color:var(--muted);margin-top:4px;display:flex;gap:6px;flex-wrap:wrap}
+
+/* toolbar */
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.toolbar .filter{flex:1;min-width:180px;display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border2);border-radius:11px;padding:9px 13px}
+.toolbar .filter input{border:none;outline:none;width:100%;background:none}
+.seg{display:inline-flex;background:#fff;border:1px solid var(--border2);border-radius:11px;overflow:hidden}
+.seg button{padding:9px 15px;font-size:13px;font-weight:600;color:var(--muted)}
+.seg button.active{background:var(--black);color:#fff}
+select.mini{border:1px solid var(--border2);border-radius:11px;padding:9px 12px;background:#fff;font-weight:600;font-size:13px}
+
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(20,18,12,.42);backdrop-filter:blur(3px);z-index:100;display:flex;align-items:flex-end;justify-content:center;padding:0}
+.modal{background:#fff;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:20px 20px 0 0;padding:22px 22px 30px;animation:up .22s ease}
+@media(min-width:760px){.overlay{align-items:center;padding:24px}.modal{border-radius:20px}}
+@keyframes up{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}}
+.modal h2{font-size:21px;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+.modal .sub{color:var(--muted);font-size:13px;margin-bottom:16px}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+.field input,.field select,.field textarea{width:100%;border:1px solid var(--border2);border-radius:11px;padding:12px 13px;outline:none;background:#fff;font-weight:500}
+.field textarea{min-height:88px;resize:vertical;line-height:1.5}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--black)}
+.field.half{display:inline-block;width:calc(50% - 5px)}
+.field.half:nth-child(odd){margin-right:8px}
+.modal-actions{display:flex;gap:10px;margin-top:18px}
+.modal-actions .btn{flex:1;justify-content:center}
+.del{color:var(--bad);font-weight:600;font-size:13px;background:none;padding:10px}
+
+/* brand hub */
+.subtabs{display:flex;gap:7px;overflow-x:auto;padding-bottom:14px;margin-bottom:6px;border-bottom:1px solid var(--border)}
+.subtabs button{padding:9px 14px;border-radius:30px;font-size:13.5px;font-weight:600;color:var(--muted);white-space:nowrap;border:1px solid transparent}
+.subtabs button.active{background:var(--black);color:#fff}
+.prose{max-width:760px;line-height:1.65}
+.prose h2{font-size:24px;font-weight:700;letter-spacing:-.02em;margin:26px 0 10px}
+.prose h3{font-size:17px;font-weight:700;margin:22px 0 8px}
+.prose p{margin:9px 0;color:#2a2a26}
+.prose ul{margin:9px 0 9px 4px;list-style:none}
+.prose li{padding:5px 0 5px 20px;position:relative}
+.prose li:before{content:"";position:absolute;left:2px;top:13px;width:6px;height:6px;border-radius:50%;background:var(--olive)}
+.swatch{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--border);border-radius:12px;background:#fff}
+.swatch .sw{width:42px;height:42px;border-radius:9px;border:1px solid var(--border2)}
+.swatch .hex{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted)}
+.rulebox{border-left:3px solid var(--olive);background:#fff;border:1px solid var(--border);border-left-width:3px;border-radius:10px;padding:12px 16px;margin:8px 0}
+.do{border-left-color:var(--good)} .dont{border-left-color:var(--bad)}
+.empty{text-align:center;padding:46px 20px;color:var(--muted)}
+.empty .big{font-size:40px;margin-bottom:8px}
+.checkitem{display:flex;gap:11px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--border)}
+.checkitem .x{color:var(--good);font-weight:800;font-size:16px}
+.searchres{position:absolute;top:62px;left:0;right:0;background:#fff;border:1px solid var(--border2);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.14);max-height:60vh;overflow-y:auto;z-index:50}
+.sr-item{display:flex;gap:10px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer}
+.sr-item:hover{background:var(--bg2)}
+.note-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:15px 16px;box-shadow:var(--shadow)}
+.note-card .meta{font-size:11.5px;color:var(--muted2);margin-top:9px;display:flex;justify-content:space-between;align-items:center}
+.bar{height:8px;border-radius:6px;background:var(--bg2);overflow:hidden}
+.bar > i{display:block;height:100%;border-radius:6px}
+
+@media(max-width:900px){
+  #side{position:fixed;left:0;top:0;z-index:60;transform:translateX(-100%);transition:.25s;box-shadow:0 0 50px rgba(0,0,0,.2)}
+  #side.open{transform:none}
+  #burger{display:inline-flex;align-items:center;justify-content:center}
+  #view{padding:18px 16px 90px}
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .page-head h1{font-size:25px}
+  #search .k{display:none}
+  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:55}
+}
+@media(min-width:901px){.scrim{display:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="side"></aside>
+  <div id="main">
+    <header id="top">
+      <button id="burger" class="iconbtn">☰</button>
+      <div id="search">
+        <span>⌕</span>
+        <input id="searchInput" placeholder="Search everything…" autocomplete="off">
+        <span class="k">⏎</span>
+      </div>
+      <div class="top-actions">
+        <button class="iconbtn" data-action="quicknote" title="Quick note">✎</button>
+        <button class="iconbtn" data-action="data-menu" title="Data & sync">⚙</button>
+      </div>
+    </header>
+    <main id="view"></main>
+  </div>
+</div>
+<div id="modalRoot"></div>
+
+<script>
+/* ============================================================
+   FEEL OS  ·  single-file app  ·  Supabase + local cache
+   ============================================================ */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>'x'+Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
+const todayISO=()=>new Date().toISOString().slice(0,10);
+const money=n=>'€'+(Number(n)||0).toLocaleString('es-ES',{maximumFractionDigits:0});
+const daysTo=d=>d?Math.round((new Date(d)-new Date(todayISO()))/864e5):null;
+const num=n=>Number(n)||0;
+function splitCSVLine(l){const out=[];let cur='',q=false;for(let i=0;i<l.length;i++){const ch=l[i];if(ch==='"'){if(q&&l[i+1]==='"'){cur+='"';i++;}else q=!q;}else if(ch===','&&!q){out.push(cur);cur='';}else cur+=ch;}out.push(cur);return out;}
+function mapHeader(h){h=h.toLowerCase();if(h.includes('email'))return 'email';if(h.includes('last'))return 'lastPurchase';if(h.includes('first purchase'))return 'firstPurchase';if(h.includes('first')||h.includes('name'))return 'firstName';if(h.includes('source'))return 'source';if(h.includes('spend')||h.includes('total'))return 'totalSpend';if(h.includes('purchase'))return 'firstPurchase';if(h.includes('tag'))return 'tags';if(h.includes('affin')||h.includes('product'))return 'affinity';return null;}
+function parseCSV(txt){const lines=txt.split(/\r?\n/).filter(l=>l.trim());if(!lines.length)return [];
+ const keys=splitCSVLine(lines[0]).map(h=>mapHeader(h.trim()));
+ return lines.slice(1).map(line=>{const cells=splitCSVLine(line);const o={};keys.forEach((k,i)=>{if(k&&cells[i]!=null&&cells[i].trim()!=='')o[k]=cells[i].trim();});if(!o.source)o.source='manual';return o;}).filter(o=>o.email);}
+
+/* ---------- product / static reference data ---------- */
+const PRODUCTS={
+  'Neuro Focus':{accent:'#FF6300',caf:'Full caffeine',ing:"Lion's Mane 400mg, Cordyceps 500mg, L-Theanine 100mg",pos:'Mental clarity · deep focus · energy',tag:'feel focused, think clear'},
+  'Serenity Brew':{accent:'#84763D',caf:'60% decaf (Swiss Water)',ing:'Reishi 700mg, Ashwagandha 300mg, L-Theanine 100mg',pos:'Calm · balance · mindful pause',tag:'feel peace, sip by sip'},
+  'Hormone Harmony':{accent:'#B75025',caf:'60% decaf (Swiss Water)',ing:'Chaga 500mg, Ashwagandha 300mg, Shatavari 200mg',pos:'Daily rhythm · vitality · feminine flow',tag:'feel balance, sip by sip'}
+};
+const ANGLE_CATS=['problem-aware','solution-aware','social proof','lifestyle','founder story','ingredient education','comparison','urgency'];
+
+/* ---------- collections config ---------- */
+const PRODNAMES=Object.keys(PRODUCTS);
+const COLS={
+ cafeterias:{label:'Cafeterías B2B',icon:'☕',primary:'title',board:'estado',
+   stages:['pendiente','contactado','interesado','descartado'],
+   cols:['title','phone','city','total_score','contactado','estado'],
+   fields:[
+     {k:'title',l:'Nombre',t:'text',req:1},{k:'phone',l:'Teléfono',t:'tel'},
+     {k:'street',l:'Dirección',t:'text'},{k:'city',l:'Ciudad',t:'text'},
+     {k:'total_score',l:'Rating',t:'number'},{k:'reviews_count',l:'Reviews',t:'number'},
+     {k:'url',l:'Google Maps',t:'url'},{k:'website',l:'Website',t:'url'},
+     {k:'contactado',l:'Contactado',t:'select',opts:['no','sí']},
+     {k:'estado',l:'Estado',t:'select',opts:['pendiente','contactado','interesado','descartado']},
+     {k:'fecha_contacto',l:'Fecha contacto',t:'date'},{k:'notas',l:'Notas',t:'textarea'}]},
+ b2b:{label:'B2B CRM',icon:'🤝',primary:'name',board:'status',
+   stages:['prospect','contacted','follow-up','sample sent','negotiating','active','lost'],
+   cols:['name','type','status','location','nextAction'],
+   fields:[
+     {k:'name',l:'Business name',t:'text',req:1},{k:'contact',l:'Contact person',t:'text'},
+     {k:'role',l:'Role',t:'text'},{k:'phone',l:'Phone',t:'tel'},{k:'email',l:'Email',t:'email'},
+     {k:'location',l:'Location',t:'text'},{k:'mapUrl',l:'Map link',t:'url'},
+     {k:'type',l:'Type',t:'select',opts:['cafe','restaurant','studio','gym','hotel','retailer','other']},
+     {k:'status',l:'Status',t:'select',opts:['prospect','contacted','follow-up','sample sent','negotiating','active','lost']},
+     {k:'lastContact',l:'Last contact',t:'date'},{k:'nextAction',l:'Next action',t:'date'},
+     {k:'estVolume',l:'Est. monthly bags',t:'number'},{k:'notes',l:'Notes',t:'textarea'}]},
+ influencers:{label:'Influencers',icon:'✨',primary:'handle',board:'status',
+   stages:['outreach','responded','shipping','posted','repeat','declined'],
+   cols:['handle','platform','followers','status','postUrl'],
+   fields:[
+     {k:'handle',l:'Handle',t:'text',req:1},{k:'platform',l:'Platform',t:'select',opts:['Instagram','TikTok','YouTube','Other']},
+     {k:'followers',l:'Followers',t:'number'},{k:'niche',l:'Niche',t:'text'},{k:'email',l:'Email',t:'email'},
+     {k:'country',l:'Country',t:'text'},{k:'language',l:'Language',t:'text'},
+     {k:'status',l:'Status',t:'select',opts:['outreach','responded','shipping','posted','repeat','declined']},
+     {k:'outreachDate',l:'Outreach date',t:'date'},{k:'responded',l:'Responded',t:'select',opts:['no','yes']},
+     {k:'productSent',l:'Product sent',t:'select',opts:['no','yes']},{k:'tracking',l:'Tracking #',t:'text'},
+     {k:'posted',l:'Posted',t:'select',opts:['no','yes']},{k:'postUrl',l:'Post URL',t:'url'},
+     {k:'reach',l:'Reach',t:'number'},{k:'engagement',l:'Engagement',t:'text'},
+     {k:'code',l:'Discount code',t:'text'},{k:'salesAttributed',l:'Sales attributed',t:'number'},
+     {k:'notes',l:'Notes',t:'textarea'}]},
+ ideas:{label:'Content',icon:'🎬',primary:'title',board:'status',
+   stages:['idea','approved','scripted','filmed','edited','scheduled','posted'],
+   cols:['title','pillar','format','status'],
+   fields:[
+     {k:'title',l:'Idea / title',t:'text',req:1},{k:'pillar',l:'Content pillar',t:'select',opts:()=>Store.list('pillars').map(p=>p.name)},
+     {k:'format',l:'Format',t:'select',opts:['reel','carousel','story','static post','blog','email','ad']},
+     {k:'status',l:'Status',t:'select',opts:['idea','approved','scripted','filmed','edited','scheduled','posted']},
+     {k:'owner',l:'Owner',t:'select',opts:['Diana','Victor','Both']},{k:'notes',l:'Notes / hook',t:'textarea'}]},
+ contacts:{label:'Email & Contacts',icon:'📧',primary:'email',
+   cols:['email','firstName','source','totalSpend','lastPurchase'],
+   fields:[
+     {k:'email',l:'Email',t:'email',req:1},{k:'firstName',l:'First name',t:'text'},
+     {k:'source',l:'Source',t:'select',opts:['Shopify customer','popup signup','event','form','manual']},
+     {k:'firstPurchase',l:'First purchase',t:'date'},{k:'lastPurchase',l:'Last purchase',t:'date'},
+     {k:'totalSpend',l:'Total spend (€)',t:'number'},
+     {k:'affinity',l:'Product affinity',t:'select',opts:[...PRODNAMES,'bundle','unknown']},
+     {k:'tags',l:'Tags',t:'text'},{k:'unsubscribed',l:'Unsubscribed',t:'select',opts:['no','yes']}]},
+ adangles:{label:'Ad Angles',icon:'🎯',primary:'hook',board:'status',
+   stages:['idea','in design','ready','live','retired'],
+   cols:['hook','category','format','status'],
+   fields:[
+     {k:'hook',l:'Hook / concept',t:'text',req:1},{k:'category',l:'Angle',t:'select',opts:ANGLE_CATS},
+     {k:'format',l:'Format',t:'select',opts:['1:1','4:5','9:16','story']},
+     {k:'product',l:'Product',t:'select',opts:[...PRODNAMES,'brand']},
+     {k:'status',l:'Status',t:'select',opts:['idea','in design','ready','live','retired']},
+     {k:'brief',l:'Visual brief',t:'textarea'},{k:'assetUrl',l:'Asset link (Higgsfield/Drive)',t:'url'},
+     {k:'perfNotes',l:'Performance notes',t:'textarea'}]},
+ notes:{label:'Notes',icon:'📝',primary:'text',
+   fields:[
+     {k:'text',l:'Note',t:'textarea',req:1},
+     {k:'tag',l:'Tag',t:'select',opts:['idea','content','observation','follow-up']},
+     {k:'author',l:'Author',t:'select',opts:['Diana','Victor']}]},
+ channels:{label:'Channel ROI',icon:'📈',primary:'channel',
+   cols:['channel','spend','revenue','roas'],
+   fields:[{k:'channel',l:'Channel',t:'text',req:1},{k:'spend',l:'Spend (€)',t:'number'},
+     {k:'revenue',l:'Revenue (€)',t:'number'},{k:'period',l:'Period',t:'text'}]},
+ competitors:{label:'Competitors',icon:'🔭',primary:'brand',
+   cols:['brand','date','url'],
+   fields:[{k:'brand',l:'Brand',t:'text',req:1},{k:'url',l:'Ad / source URL',t:'url'},
+     {k:'date',l:'Date seen',t:'date'},{k:'notes',l:'What they are running',t:'textarea'}]},
+ quickwins:{label:'Quick Wins',icon:'⚡',primary:'text',board:'status',
+   stages:['open','doing','done'],cols:['text','impact','status'],
+   fields:[{k:'text',l:'Opportunity',t:'text',req:1},{k:'impact',l:'Impact',t:'select',opts:['high','medium','low']},
+     {k:'status',l:'Status',t:'select',opts:['open','doing','done']},{k:'votes',l:'Votes',t:'number'}]},
+ assets:{label:'Assets',icon:'🗂️',primary:'name',
+   cols:['name','type','tag','url'],
+   fields:[{k:'name',l:'Name',t:'text',req:1},{k:'type',l:'Type',t:'select',opts:['photo','video','design','other']},
+     {k:'tag',l:'Tag / project',t:'text'},{k:'url',l:'Link',t:'url'}]},
+ latam:{label:'LatAm Expansion',icon:'🌎',primary:'country',
+   cols:['country','status','partner'],
+   fields:[{k:'country',l:'Country',t:'text',req:1},
+     {k:'status',l:'Stage',t:'select',opts:['researching','validating','legal','partner-search','ready','launched']},
+     {k:'partner',l:'Production partner',t:'text'},{k:'costEst',l:'Cost estimate',t:'text'},{k:'legal',l:'Legal / requirements',t:'textarea'}]},
+ events:{label:'Events',icon:'🎪',primary:'name',
+   cols:['name','date','status','leads','revenue'],
+   fields:[{k:'name',l:'Event',t:'text',req:1},{k:'date',l:'Date',t:'date'},
+     {k:'status',l:'Status',t:'select',opts:['upcoming','current','past']},
+     {k:'attendance',l:'Attendance',t:'number'},{k:'cost',l:'Cost (€)',t:'number'},
+     {k:'leads',l:'Leads captured',t:'number'},{k:'revenue',l:'Revenue (€)',t:'number'},{k:'learnings',l:'Learnings',t:'textarea'}]},
+ links:{label:'Links Vault',icon:'🔗',primary:'name',
+   cols:['name','category','url'],
+   fields:[{k:'name',l:'Name',t:'text',req:1},{k:'url',l:'URL',t:'url'},{k:'category',l:'Category',t:'text'}]},
+ kpis:{label:'Manual KPIs',icon:'📊',primary:'label',
+   cols:['label','value','sub'],
+   fields:[{k:'label',l:'Metric',t:'text',req:1},{k:'value',l:'Value',t:'text'},{k:'sub',l:'Note',t:'text'}]},
+ embeds:{label:'Dashboards',icon:'🖥️',primary:'name',
+   fields:[{k:'name',l:'Name',t:'text',req:1},{k:'url',l:'Embed URL',t:'url',req:1}]},
+ adaptogens:{label:'Adaptogens',icon:'🧪',primary:'name',
+   cols:['name','stock','supplier','formulas'],
+   fields:[{k:'name',l:'Ingredient',t:'text',req:1},{k:'stock',l:'Stock (g)',t:'number'},
+     {k:'supplier',l:'Supplier',t:'text'},{k:'formulas',l:'Used in',t:'text'}]}
+};
+
+/* ---------- seed data (from project files) ---------- */
+function seed(){
+ return {
+  inventory:[
+    {id:uid(),sku:'neuro',name:'Neuro Focus',bags:75,reorderAt:20,accent:'#FF6300'},
+    {id:uid(),sku:'serenity',name:'Serenity Brew',bags:75,reorderAt:20,accent:'#84763D'},
+    {id:uid(),sku:'hormone',name:'Hormone Harmony',bags:75,reorderAt:20,accent:'#B75025'}],
+  adaptogens:[
+    {id:uid(),name:"Lion's Mane 30%",stock:3000,supplier:'Naturalin',formulas:'Neuro Focus'},
+    {id:uid(),name:'Reishi 30%',stock:4000,supplier:'Naturalin',formulas:'Serenity Brew'},
+    {id:uid(),name:'Chaga 30%',stock:3500,supplier:'Naturalin',formulas:'Hormone Harmony'},
+    {id:uid(),name:'Ashwagandha 10:1',stock:4000,supplier:'Naturalin',formulas:'HH + SB'},
+    {id:uid(),name:'Cordyceps 30%',stock:3500,supplier:'Naturalin',formulas:'Neuro Focus'},
+    {id:uid(),name:'L-Theanine',stock:3000,supplier:'Botanic HC',formulas:'SB + NF'},
+    {id:uid(),name:'Shatavari 20%',stock:3000,supplier:'Botanic HC',formulas:'Hormone Harmony'}],
+  pillars:[{id:uid(),name:'origin & sourcing'},{id:uid(),name:'ingredient education'},
+    {id:uid(),name:'calm energy & focus'},{id:uid(),name:'women & hormonal balance'},
+    {id:uid(),name:'founder story'},{id:uid(),name:'community & events'}],
+  b2b:[
+    {id:uid(),name:'Hot Core',type:'studio',status:'contacted',location:'Barcelona',nextAction:'',notes:'wellness studio outreach'},
+    {id:uid(),name:'Concept Barre',type:'studio',status:'follow-up',location:'Barcelona',notes:'natural wholesale entry, existing coffee setup'},
+    {id:uid(),name:'Corehaus',type:'studio',status:'contacted',location:'Barcelona',notes:'warm DM sent, community events angle'}],
+  links:[
+    {id:uid(),name:'Shopify admin',url:'https://admin.shopify.com',category:'store'},
+    {id:uid(),name:'Klaviyo',url:'https://www.klaviyo.com',category:'email'},
+    {id:uid(),name:'Meta Ads Manager',url:'https://adsmanager.facebook.com',category:'ads'},
+    {id:uid(),name:'ManyChat',url:'https://manychat.com',category:'automation'},
+    {id:uid(),name:'Higgsfield',url:'https://higgsfield.ai',category:'creative'}],
+  channels:[{id:uid(),channel:'Events',spend:0,revenue:0,period:'2026'},
+    {id:uid(),channel:'Paid ads',spend:0,revenue:0,period:'2026'},
+    {id:uid(),channel:'Influencers',spend:0,revenue:0,period:'2026'},
+    {id:uid(),channel:'B2B / wholesale',spend:0,revenue:0,period:'2026'}],
+  events:[{id:uid(),name:'Wellness Rave',date:'2026-05-01',status:'past',attendance:3000,leads:0,revenue:0,learnings:'validated events as strongest proof-of-concept channel'}],
+  sales:[],ideas:[],influencers:[],contacts:[],adangles:[],quickwins:[],
+  competitors:[{id:uid(),brand:'Mudwtr'},{id:uid(),brand:'Four Sigmatic'},{id:uid(),brand:'Space Goods'},{id:uid(),brand:'Beam'},{id:uid(),brand:'Ryze'}],
+  assets:[],latam:[{id:uid(),country:'Colombia',status:'validating'},{id:uid(),country:'Panama',status:'researching'},{id:uid(),country:'Venezuela',status:'researching'}],
+  kpis:[],embeds:[]
+ };
+}
+
+/* ---------- store: supabase + localStorage cache ---------- */
+const CACHE_KEY='feelOS_cache_v1', CFG_KEY='feelOS_supa_v1';
+const Store={
+ state:{}, client:null, local:true, cfg:null,
+ init(){
+   try{this.cfg=JSON.parse(localStorage.getItem(CFG_KEY)||'null')}catch(e){}
+   const cached=this.loadCache();
+   this.state=cached||seed();
+   if(!cached)this.saveCache();
+   if(this.cfg&&this.cfg.url&&this.cfg.key&&window.supabase){this.connect(this.cfg.url,this.cfg.key,true);}
+ },
+ loadCache(){try{return JSON.parse(localStorage.getItem(CACHE_KEY))}catch(e){return null}},
+ saveCache(){try{localStorage.setItem(CACHE_KEY,JSON.stringify(this.state))}catch(e){}},
+ list(c){return this.state[c]||(this.state[c]=[])},
+ get(c,id){return this.list(c).find(x=>x.id===id)},
+ async connect(url,key,silent){
+   try{
+     this.client=window.supabase.createClient(url,key);
+     this.cfg={url,key};localStorage.setItem(CFG_KEY,JSON.stringify(this.cfg));
+     this.local=false;
+     await this.seedRemoteIfEmpty();
+     await this.fetchAll();
+     this.subscribe();
+     setSync(true);
+     if(!silent)toast('Connected to Supabase. Data is now shared live.');
+   }catch(e){this.local=true;setSync(false);if(!silent)toast('Could not connect: '+e.message);console.error(e);}
+ },
+ disconnect(){this.client=null;this.local=true;this.cfg=null;localStorage.removeItem(CFG_KEY);setSync(false);},
+ async fetchAll(){
+   if(!this.client)return;
+   const grouped={};
+   for(const k in seed())grouped[k]=[];
+
+   // Cargar cafeterías de la tabla específica
+   const {data:cafeterias,error:cafError}=await this.client.from('cafeterias').select('*');
+   if(!cafError&&cafeterias){
+     grouped['cafeterias']=cafeterias.map(c=>({...c,id:c.id}));
+   }
+
+   // Cargar otros datos de feel_records
+   const {data,error}=await this.client.from('feel_records').select('*');
+   if(error){console.error(error);return;}
+   data.forEach(r=>{(grouped[r.collection]=grouped[r.collection]||[]).push({id:r.id,...r.data,_created:r.created_at});});
+   for(const k in COLS)if(!grouped[k])grouped[k]=[];
+   ['inventory','adaptogens','pillars','sales'].forEach(k=>{if(!grouped[k])grouped[k]=[]});
+   this.state=grouped;
+   this.saveCache();render();
+ },
+ async seedRemoteIfEmpty(){
+   const {data}=await this.client.from('feel_records').select('id').limit(1);
+   if(data&&data.length)return; // remote already has data
+   const rows=[]; // push whatever is currently local (seed + anything entered offline)
+   for(const coll in this.state)(this.state[coll]||[]).forEach(rec=>{const {id,_created,_updated,...d}=rec;rows.push({collection:coll,data:d});});
+   if(rows.length)await this.client.from('feel_records').insert(rows);
+ },
+ subscribe(){
+   if(!this.client)return;
+   this.client.channel('feelos').on('postgres_changes',{event:'*',schema:'public',table:'feel_records'},()=>{
+     clearTimeout(this._t);this._t=setTimeout(()=>this.fetchAll(),350);
+   }).subscribe();
+ },
+ async upsert(c,obj){
+   const arr=this.list(c);const isNew=!obj.id;
+   if(this.client){
+     const {id,_created,_updated,...data}=obj;
+     // Las cafeterías se guardan en tabla específica
+     if(c==='cafeterias'){
+       if(isNew){
+         const {data:ins,error}=await this.client.from('cafeterias').insert(data).select().single();
+         if(error){console.error(error);toast('Save failed: '+error.message);}
+         else{obj.id=ins.id;}
+       }else{
+         const {error}=await this.client.from('cafeterias').update(data).eq('id',id);
+         if(error)console.error(error);
+       }
+     }else{
+       if(isNew){
+         const {data:ins,error}=await this.client.from('feel_records').insert({collection:c,data}).select().single();
+         if(error){console.error(error);toast('Save failed: '+error.message);}
+         else{obj.id=ins.id;obj._created=ins.created_at;}
+       }else{
+         const {error}=await this.client.from('feel_records').update({data}).eq('id',id);
+         if(error)console.error(error);
+       }
+     }
+   }else if(isNew){obj.id=uid();obj._created=new Date().toISOString();}
+   const i=arr.findIndex(x=>x.id===obj.id);if(i>=0)arr[i]=obj;else arr.push(obj);
+   this.saveCache();
+   return obj;
+ },
+ async remove(c,id){
+   this.state[c]=this.list(c).filter(x=>x.id!==id);this.saveCache();
+   if(this.client){
+     const table=c==='cafeterias'?'cafeterias':'feel_records';
+     const col=c==='cafeterias'?'id':'id';
+     await this.client.from(table).delete().eq(col,id);
+   }
+ },
+ exportJSON(){return JSON.stringify(this.state,null,2);},
+ async importJSON(txt){const o=JSON.parse(txt);this.state=o;this.saveCache();
+   if(this.client){await this._pushAll();await this.fetchAll();}else render();},
+ async _pushAll(){if(!this.client)return;
+   await this.client.from('feel_records').delete().neq('id','00000000-0000-0000-0000-000000000000');
+   const rows=[];for(const c in this.state)(this.state[c]||[]).forEach(r=>{const{id,_created,_updated,...d}=r;rows.push({collection:c,data:d});});
+   if(rows.length)await this.client.from('feel_records').insert(rows);}
+};
+
+/* ---------- navigation ---------- */
+const NAV=[
+ {g:'Command'},
+ {r:'home',label:'Control Center',icon:'🏠'},
+ {g:'Knowledge'},
+ {r:'brand',label:'Brand Hub',icon:'📖'},
+ {r:'notes',label:'Notes',icon:'📝'},
+ {g:'Operations'},
+ {r:'inventory',label:'Inventory & Production',icon:'📦'},
+ {r:'finance',label:'Finance & Scenarios',icon:'💶'},
+ {r:'metrics',label:'Metrics',icon:'📊'},
+ {g:'Growth'},
+ {r:'cafeterias',label:'Cafeterías B2B',icon:'☕'},
+ {r:'b2b',label:'B2B CRM',icon:'🤝'},
+ {r:'influencers',label:'Influencers',icon:'✨'},
+ {r:'ideas',label:'Content',icon:'🎬'},
+ {r:'contacts',label:'Email & Contacts',icon:'📧'},
+ {r:'adangles',label:'Ad Angles',icon:'🎯'},
+ {g:'Founder Ops'},
+ {r:'founderops',label:'Growth & Ops',icon:'🚀'}
+];
+function buildSide(){
+ const counts={cafeterias:Store.list('cafeterias').length,b2b:Store.list('b2b').length,influencers:Store.list('influencers').length,ideas:Store.list('ideas').length};
+ let h=`<div class="brandmark"><div><span class="logo">feel</span><span class="dot" style="display:inline-block"></span></div></div>`;
+ h=`<div class="brandmark"><div class="logo">feel<span style="color:var(--neuro)">.</span></div></div>`;
+ h+=`<div style="padding:0 8px 8px"><small style="color:var(--muted);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600">internal os</small></div>`;
+ NAV.forEach(n=>{
+   if(n.g){h+=`<div class="navgroup">${n.g}</div>`;return;}
+   const b=counts[n.r]?`<span class="badge">${counts[n.r]}</span>`:'';
+   h+=`<a class="nav" href="#${n.r}" data-r="${n.r}"><span class="ic">${n.icon}</span>${n.label}${b}</a>`;
+ });
+ h+=`<div class="side-foot">
+   <div class="syncpill ${Store.client?'on':'off'}" id="syncPill"><span class="led"></span><span>${Store.client?'Shared · Supabase':'Local only'}</span></div>
+   <button class="btn ghost sm block" data-action="data-menu">Data & sync</button></div>`;
+ $('#side').innerHTML=h;
+ const cur=location.hash.slice(1)||'home';
+ $$('#side .nav').forEach(a=>a.classList.toggle('active',a.dataset.r===cur));
+}
+function setSync(on){const p=$('#syncPill');if(p){p.className='syncpill '+(on?'on':'off');p.innerHTML=`<span class="led"></span><span>${on?'Shared · Supabase':'Local only'}</span>`;}}
+
+/* ============================================================ RENDER ============================================================ */
+function render(){
+ buildSide();
+ const r=location.hash.slice(1)||'home';
+ const fn={home:renderHome,brand:renderBrand,inventory:renderInventory,finance:renderFinance,
+   metrics:renderMetrics,cafeterias:()=>renderCRM('cafeterias'),b2b:()=>renderCRM('b2b'),influencers:()=>renderCRM('influencers'),
+   ideas:renderContent,contacts:renderEmail,adangles:renderAdAngles,notes:renderNotes,founderops:renderFounderOps}[r];
+ $('#view').innerHTML=(fn||renderHome)();
+ $('#view').scrollTo?.(0,0);window.scrollTo(0,0);
+ closeSide();
+}
+window.addEventListener('hashchange',render);
+
+/* ---------- helpers for velocity / alerts ---------- */
+function velocity(sku){ // bags/day over last 30d
+ const since=new Date(Date.now()-30*864e5);
+ const u=Store.list('sales').filter(s=>s.sku===sku&&new Date(s.date)>=since).reduce((a,s)=>a+num(s.qty),0);
+ return u/30;
+}
+function daysOfStock(inv){const v=velocity(inv.sku);return v>0?Math.floor(inv.bags/v):null;}
+function alerts(){
+ const a=[];
+ Store.list('inventory').forEach(i=>{if(i.bags<=i.reorderAt)a.push({t:'low',msg:`${i.name} low: ${i.bags} bags left (reorder at ${i.reorderAt})`,r:'inventory'});});
+ Store.list('b2b').forEach(b=>{const d=daysTo(b.nextAction);if(b.nextAction&&d!==null&&d<=0)a.push({t:'crm',msg:`Follow up due: ${b.name}`,r:'b2b'});});
+ Store.list('ideas').forEach(i=>{if(i.status&&i.status!=='posted'&&i.status!=='idea'&&i.status==='scheduled')a.push({t:'content',msg:`Scheduled, not posted: ${i.title}`,r:'ideas'});});
+ // adaptogen bottleneck reminder
+ return a;
+}
+
+/* ---------- CONTROL CENTER ---------- */
+function renderHome(){
+ const inv=Store.list('inventory');
+ const totalBags=inv.reduce((a,i)=>a+num(i.bags),0);
+ const wkStart=new Date(Date.now()-7*864e5);
+ const sales=Store.list('sales').filter(s=>new Date(s.date)>=wkStart);
+ const wkUnits=sales.reduce((a,s)=>a+num(s.qty),0);
+ const wkRev=sales.reduce((a,s)=>a+num(s.qty)*num(s.unitPrice),0);
+ const newContacts=Store.list('contacts').filter(c=>c._created&&new Date(c._created)>=wkStart).length;
+ const newB2B=Store.list('b2b').filter(c=>c._created&&new Date(c._created)>=wkStart).length;
+ const al=alerts();
+ let h=`<div class="page-head"><div><h1>Good ${greet()}, Victor.</h1><p>the one screen for feel. inventory, pipeline, ideas, and the next move - live.</p></div>
+   <button class="btn" data-action="logsale">＋ Log a sale</button></div>`;
+
+ h+=`<div class="grid g3" style="margin-bottom:14px">`;
+ inv.forEach(i=>{const dos=daysOfStock(i);const low=i.bags<=i.reorderAt;
+   h+=`<div class="stat accent" style="background:${i.accent}">
+     <div class="lbl" style="color:#ffffffcc">${esc(i.name)}</div>
+     <div class="val">${i.bags}<span style="font-size:15px;font-weight:600"> bags</span></div>
+     <div class="sub" style="color:#ffffffd9">${dos!=null?dos+' days of stock':'no sales velocity yet'}${low?' · ⚠ reorder':''}</div></div>`;});
+ h+=`</div>`;
+
+ h+=`<div class="grid g4" style="margin-bottom:14px">
+   ${stat('Bags remaining',totalBags,'across 3 SKUs')}
+   ${stat('Revenue · 7d',money(wkRev),wkUnits+' units sold')}
+   ${stat('New signups · 7d',newContacts,'email contacts')}
+   ${stat('New B2B · 7d',newB2B,Store.list('b2b').length+' total prospects')}</div>`;
+
+ h+=`<div class="grid g2">`;
+ // alerts
+ h+=`<div class="card"><h3>⚠ Active alerts</h3>`;
+ if(!al.length)h+=`<div class="rowmuted" style="padding:6px 0">All clear. Nothing needs you right now.</div>`;
+ else al.forEach(a=>h+=`<div style="display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)"><span class="chip ${a.t==='low'?'r':a.t==='crm'?'a':'b'}">${a.t}</span><span style="flex:1;font-weight:600;font-size:13.5px">${esc(a.msg)}</span><a class="btn ghost sm" href="#${a.r}">View</a></div>`);
+ h+=`</div>`;
+ // quick actions
+ h+=`<div class="card"><h3>Quick actions</h3><div class="grid g2" style="gap:10px">
+   <button class="btn ghost block" data-action="openform" data-coll="b2b">＋ B2B contact</button>
+   <button class="btn ghost block" data-action="openform" data-coll="influencers">＋ Influencer</button>
+   <button class="btn ghost block" data-action="openform" data-coll="ideas">＋ Content idea</button>
+   <button class="btn ghost block" data-action="quicknote">＋ Note</button>
+   <button class="btn ghost block" data-action="openform" data-coll="adangles">＋ Ad angle</button>
+   <button class="btn ghost block" data-action="logsale">＋ Log sale</button></div></div>`;
+ h+=`</div>`;
+
+ // pipeline snapshot
+ const byStatus=s=>{const m={};Store.list('b2b').forEach(b=>m[b.status]=(m[b.status]||0)+1);return m;};
+ const ps=byStatus();
+ h+=`<div class="card" style="margin-top:14px"><h3>B2B pipeline snapshot</h3><div class="pillrow">`;
+ COLS.b2b.stages.forEach(s=>h+=`<span class="chip ${chipColor(s)}">${s}: <b>${ps[s]||0}</b></span>`);
+ h+=`</div></div>`;
+ return h;
+}
+function greet(){const x=new Date().getHours();return x<12?'morning':x<19?'afternoon':'evening';}
+function stat(l,v,s){return `<div class="stat"><div class="lbl">${l}</div><div class="val">${v}</div><div class="sub">${s||''}</div></div>`;}
+function chipColor(s){return /active|posted|done|ready|launched/.test(s)?'g':/lost|declined|retired/.test(s)?'r':/follow|negoti|doing|validat|in design|shipping/.test(s)?'a':/prospect|idea|outreach|researching/.test(s)?'n':'b';}
+
+/* ---------- generic CRM (b2b / influencers) ---------- */
+let viewMode={};
+function renderCRM(c){
+ const cfg=COLS[c];const items=Store.list(c);
+ const mode=viewMode[c]||'board';
+ let h=`<div class="page-head"><div><h1>${cfg.icon} ${cfg.label}</h1><p>${c==='b2b'?'cafes, restaurants, studios, gyms, hotels and retailers - never lose a follow-up.':'track every gift, reply, shipment and post in one pipeline.'}</p></div>
+   <button class="btn" data-action="openform" data-coll="${c}">＋ Add ${c==='b2b'?'business':'influencer'}</button></div>`;
+ h+=`<div class="toolbar">
+   <div class="filter"><span>⌕</span><input id="f_${c}" placeholder="Filter ${cfg.label}…" oninput="filterList('${c}',this.value)"></div>
+   <div class="seg"><button class="${mode==='board'?'active':''}" data-action="vmode" data-coll="${c}" data-m="board">Board</button>
+   <button class="${mode==='table'?'active':''}" data-action="vmode" data-coll="${c}" data-m="table">Table</button></div></div>`;
+ if(!items.length)return h+empty(cfg,c);
+ h+=`<div id="list_${c}">`+(mode==='board'?board(c,items):tableHTML(c,items))+`</div>`;
+ return h;
+}
+function filterList(c,q){
+ q=q.toLowerCase();const items=Store.list(c).filter(it=>Object.values(it).some(v=>String(v).toLowerCase().includes(q)));
+ const mode=viewMode[c]||'board';
+ $('#list_'+c).innerHTML=items.length?(mode==='board'?board(c,items):tableHTML(c,items)):'<div class="empty">No matches.</div>';
+}
+function tableHTML(c,items){
+ const cfg=COLS[c];const cols=cfg.cols||cfg.fields.slice(0,4).map(f=>f.k);
+ let h=`<div class="tablewrap"><table><thead><tr>`;
+ cols.forEach(k=>h+=`<th>${label(c,k)}</th>`);h+=`</tr></thead><tbody>`;
+ items.forEach(it=>{h+=`<tr data-action="openform" data-coll="${c}" data-id="${it.id}">`;
+   cols.forEach(k=>{let v=it[k];
+     if(k==='roas'){const r=num(it.spend)?(num(it.revenue)/num(it.spend)).toFixed(2)+'x':'—';v=r;}
+     if(k==='status'||k==='type'||k==='impact')v=`<span class="chip ${chipColor(v||'')}">${esc(v||'—')}</span>`;
+     else if(k==='url'||k==='postUrl')v=v?`<a href="${esc(v)}" target="_blank" onclick="event.stopPropagation()">open ↗</a>`:'—';
+     else if(/spend|revenue|totalSpend/.test(k))v=v?money(v):'—';
+     else if(k==='followers'||k==='reach')v=v?Number(v).toLocaleString():'—';
+     else v=esc(v||'—');
+     h+=`<td>${v}</td>`;});
+   h+=`</tr>`;});
+ h+=`</tbody></table></div>`;return h;
+}
+function board(c,items){
+ const cfg=COLS[c];let h=`<div class="board">`;
+ cfg.stages.forEach(st=>{const col=items.filter(i=>(i[cfg.board]||cfg.stages[0])===st);
+   h+=`<div class="bcol"><h4>${st}<span>${col.length}</span></h4>`;
+   col.forEach(it=>{h+=`<div class="bcard" data-action="openform" data-coll="${c}" data-id="${it.id}">
+     <div class="t">${esc(it[cfg.primary]||'untitled')}</div><div class="m">`;
+     (cfg.cols||[]).filter(k=>k!==cfg.primary&&k!==cfg.board).slice(0,3).forEach(k=>{if(it[k])h+=`<span class="chip n">${esc(it[k])}</span>`;});
+     h+=`</div></div>`;});
+   h+=`</div>`;});
+ h+=`</div>`;return h;
+}
+function label(c,k){const f=(COLS[c].fields||[]).find(f=>f.k===k);return f?f.l:(k==='roas'?'ROAS':k);}
+function empty(cfg,c){return `<div class="empty"><div class="big">${cfg.icon}</div><div style="font-weight:600;font-size:17px;color:var(--ink)">Nothing here yet</div>
+  <p style="margin:6px 0 16px">Add your first ${cfg.label.toLowerCase()} entry to get going.</p>
+  <button class="btn" data-action="openform" data-coll="${c}">＋ Add ${cfg.label}</button></div>`;}
+
+/* ---------- BRAND HUB ---------- */
+let brandTab='dna';
+function renderBrand(){
+ const tabs=[['dna','Brand DNA'],['archetypes','Archetypes'],['icp','ICP'],['history','History & roots'],
+   ['products','Products'],['pricing','Pricing'],['palette','Palette'],['type','Typography'],['rules','Hard rules']];
+ let h=`<div class="page-head"><div><h1>📖 Brand Hub</h1><p>everything that makes feel feel. this replaces notion - open it, read it, keep it true.</p></div></div>`;
+ h+=`<div class="subtabs">`+tabs.map(t=>`<button class="${brandTab===t[0]?'active':''}" data-action="btab" data-t="${t[0]}">${t[1]}</button>`).join('')+`</div>`;
+ h+=`<div class="prose">${brandContent(brandTab)}</div>`;
+ return h;
+}
+function brandContent(t){
+ if(t==='dna')return `<h2>The brand essence</h2>
+   <p>feel is a premium functional coffee brand that bridges specialty coffee with scientific wellness. colombian specialty coffee from the sierra nevada de santa marta, sourced from indigenous arhuaco communities, blended with standardized adaptogen and medicinal mushroom extracts.</p>
+   <h3>Three core values</h3><ul>
+   <li><b>Conscious sourcing</b>: colombian specialty coffee from arhuaco communities.</li>
+   <li><b>Scientific formulation</b>: every ingredient chosen for purpose, backed by research.</li>
+   <li><b>Accessible premium</b>: high-quality function at €29.95 per 300g bag.</li></ul>
+   <h3>Combined tone of voice</h3><p>conscious + close + cool. explains the why (the sage), delivered with care (the caregiver), wrapped in modern design (the creator).</p>`;
+ if(t==='archetypes')return `<h2>Core archetypes</h2>
+   <h3>🌿 The Sage <span style="color:var(--muted);font-weight:500">(primary)</span></h3>
+   <p>transmits intelligence, research, scientific foundation. clear, founded, explains with depth in accessible language.</p>
+   <div class="rulebox">"cada ingrediente que elegimos tiene un propósito. sabemos que el café puede afectar hormonas, por eso diseñamos una fórmula que, en lugar de dañarte, te apoya."</div>
+   <h3>✨ The Caregiver <span style="color:var(--muted);font-weight:500">(secondary)</span></h3>
+   <p>warmth, empathy, genuine protection. like a trusted friend who cares about your wellbeing.</p>
+   <div class="rulebox">"sabemos que amas el café, y queremos que lo disfrutes sin miedo, sin ansiedad, sin comprometer tu salud."</div>
+   <h3>🎨 The Creator <span style="color:var(--muted);font-weight:500">(complementary)</span></h3>
+   <p>inspires innovation and aesthetic excellence. visionary, fresh, different.</p>
+   <div class="rulebox">"imaginamos un café distinto: uno que no solo te despierte, sino que te acompañe, te cuide y te potencie."</div>`;
+ if(t==='icp')return `<h2>Ideal customer profiles</h2>
+   <p>health-conscious, premium, urban professionals aged 25–55. european expats and latin american audiences served by the english feed.</p>
+   <ul><li><b>The optimizer</b> - wants cognitive performance without the crash. neuro focus.</li>
+   <li><b>The calm seeker</b> - loves coffee, hates the jitters and anxiety. serenity brew.</li>
+   <li><b>Women who care about their hormonal balance</b> - outcome-framed, never medical. hormone harmony.</li>
+   <li><b>Wellness venues</b> - studios, barre, gyms, cafes that serve a conscious crowd (b2b).</li></ul>
+   <p style="color:var(--muted)">Tip: paste deeper ICP detail from ICPS_FEEL here - this section is editable in the notes module for now.</p>`;
+ if(t==='history')return `<h2>History & roots</h2>
+   <p>feel functional s.l. is a barcelona-based brand founded by victor and diana. the coffee comes from the sierra nevada de santa marta in colombia, 1100–1600m altitude, grown by indigenous arhuaco communities.</p>
+   <p>the first production batch is complete (~225 bags). the first events activation, a sponsorship at the wellness rave with roughly 3,000 attendees, validated events as the strongest proof-of-concept channel.</p>
+   <p>organic demand from colombia, panama and venezuela has opened a latin america expansion track, kept in research while european operations stay the priority.</p>`;
+ if(t==='products'){let h=`<h2>Products</h2><p>all bags: 300g · 20 servings · €29.95 retail · €17.50 wholesale. medium roast. tasting notes: brown sugar, white flowers, milk chocolate, lemon.</p>`;
+   for(const[n,p]of Object.entries(PRODUCTS))h+=`<div class="card" style="margin:12px 0;border-left:5px solid ${p.accent}"><h3 style="margin:0">${n}</h3>
+     <p style="margin:6px 0"><b>${p.pos}</b><br>"${p.tag}"</p>
+     <p style="margin:4px 0;color:var(--muted)">${p.caf} · ${p.ing}</p></div>`;
+   h+=`<p style="margin-top:14px">two bundles: <b>am/pm set</b> (neuro focus + serenity brew) and <b>the full functional set</b> (all three).</p>`;return h;}
+ if(t==='pricing')return `<h2>Pricing strategy</h2>
+   <ul><li>retail (d2c): <b>€29.95</b> per bag · margin ~€11.11 · cost €18.84.</li>
+   <li>wholesale to venues: <b>€17.50</b> per bag · venue keeps 41–46% if they resell.</li>
+   <li>retail/wholesale cost: €9.46 per bag (coffee + ingredients + packaging).</li></ul>
+   <p>venues decide whether to resell or serve. no revenue-share tracking - keep the offer one clean yes/no. see Finance & Scenarios for full projections.</p>`;
+ if(t==='palette'){const sw=[['Cream (app/base)','#F6F5F0'],['Cream packaging','#EDDDC6'],['Neuro Focus','#FF6300'],['Hormone Harmony','#B75025'],['Serenity / olive-gold','#84763D'],['Soft yellow','#E9E15B'],['Black','#000000']];
+   return `<h2>Palette</h2><p>cream is the connective tissue across every product, page and email. one accent color per product, never mixed on the same asset.</p>
+   <div class="grid g2" style="margin-top:12px">`+sw.map(s=>`<div class="swatch"><div class="sw" style="background:${s[1]}"></div><div><div style="font-weight:600">${s[0]}</div><div class="hex">${s[1]}</div></div></div>`).join('')+`</div>`;}
+ if(t==='type')return `<h2>Typography</h2>
+   <ul><li><b>Margin</b> - display font, logo + rare small accents only ("new", "limited"). never headlines or body.</li>
+   <li><b>Helvetica Neue Bold</b> - all headlines, product names, section titles, CTAs.</li>
+   <li><b>Helvetica Neue Medium / Light</b> - body copy, descriptions, fine print.</li></ul>
+   <p>flat, matte, paper-like. no gradients, no drop shadows, no glossy effects. botanical line-art only as subtle low-opacity texture.</p>`;
+ if(t==='rules')return `<h2>Hard brand rules</h2><p>non-negotiable. apply to every label, export and piece of copy from this app.</p>
+   <div class="rulebox dont">Never use the word "ritual". no exceptions, any channel.</div>
+   <div class="rulebox dont">No em dashes. use hyphens or restructure.</div>
+   <div class="rulebox dont">No exclamation marks in feel-facing copy.</div>
+   <div class="rulebox dont">No triple-adjective AI sequences.</div>
+   <div class="rulebox dont">No unverified claims. never "third-party tested" or direct hormonal/medical promises.</div>
+   <div class="rulebox do">All feel-facing copy in english, regardless of conversation language.</div>
+   <div class="rulebox do">Lowercase favored. punchy, minimal, smart vocabulary.</div>
+   <div class="rulebox do">Hormone copy always outcome-framed: "designed for women who care about their hormonal balance".</div>`;
+ return '';
+}
+
+/* ---------- INVENTORY & PRODUCTION ---------- */
+function renderInventory(){
+ const inv=Store.list('inventory');
+ let h=`<div class="page-head"><div><h1>📦 Inventory & Production</h1><p>live bag count, adaptogen stock, capacity and reorder alerts. log a sale and stock drops automatically.</p></div>
+   <div style="display:flex;gap:8px"><button class="btn ghost" data-action="recount">Physical recount</button><button class="btn" data-action="logsale">＋ Log sale</button></div></div>`;
+ h+=`<div class="grid g3" style="margin-bottom:16px">`;
+ inv.forEach(i=>{const dos=daysOfStock(i);const pct=Math.min(100,i.bags/Math.max(i.bags,i.reorderAt*3)*100);
+   h+=`<div class="card" style="border-top:5px solid ${i.accent}">
+     <div style="display:flex;justify-content:space-between;align-items:center"><b>${esc(i.name)}</b>
+       <button class="iconbtn" data-action="editinv" data-id="${i.id}" title="Edit">✎</button></div>
+     <div class="val" style="font-size:34px;font-weight:700;margin:8px 0 4px">${i.bags}<span style="font-size:14px;font-weight:600;color:var(--muted)"> bags</span></div>
+     <div class="bar" style="margin:8px 0"><i style="width:${pct}%;background:${i.accent}"></i></div>
+     <div class="sub" style="font-size:12.5px;color:var(--muted)">${dos!=null?dos+' days of stock · ':''}reorder at ${i.reorderAt}${i.bags<=i.reorderAt?' · <b style="color:var(--bad)">⚠ reorder now</b>':''}</div></div>`;});
+ h+=`</div>`;
+
+ // adaptogens
+ h+=`<div class="card" style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><h3 style="margin:0">🧪 Adaptogen stock</h3><button class="btn ghost sm" data-action="openform" data-coll="adaptogens">＋ Ingredient</button></div>`;
+ h+=tableHTML('adaptogens',Store.list('adaptogens'));
+ h+=`<div class="rulebox" style="margin-top:12px">Bottleneck: <b>Ashwagandha</b> and <b>Cordyceps</b> are the first to run out on a full batch. Reorder those two first. Max optimal batch ≈ <b>850 bags</b> (Neuro 350 · Serenity 250 · Hormone 250).</div></div>`;
+
+ // capacity
+ const cap=[['Hormone Harmony','Shatavari','3.000 g','6 g','500'],['Serenity Brew','Reishi','4.000 g','12 g','333'],['Neuro Focus','Cordyceps','3.500 g','10 g','350']];
+ h+=`<div class="card"><h3>Max capacity per formula (limiting ingredient)</h3><div class="tablewrap"><table><thead><tr><th>Formula</th><th>Limiting</th><th>Stock</th><th>g/bag</th><th>Max bags</th></tr></thead><tbody>`;
+ cap.forEach(r=>h+=`<tr style="cursor:default">${r.map((c,i)=>`<td${i>1?' style="text-align:right"':''}>${c}</td>`).join('')}</tr>`);
+ h+=`</tbody></table></div></div>`;
+ return h;
+}
+
+/* ---------- FINANCE & SCENARIOS ---------- */
+function renderFinance(){
+ const sc=[
+  {name:'All ecommerce D2C',margin:'€11.11 / bag',badge:'g',rows:{225:2499,850:9444,1500:16665},detail:'price €29.95 · cost €18.84 · 37.1% margin'},
+  {name:'50% D2C / 50% retail',margin:'€9.58 / bag',badge:'a',rows:{225:2154,850:8139,1500:14363},detail:'blended · 40.4% margin'},
+  {name:'All retail / wholesale',margin:'€8.04 / bag',badge:'b',rows:{225:1809,850:6834,1500:12060},detail:'sell at €17.50 · cost €9.46 · 46% margin'}];
+ let h=`<div class="page-head"><div><h1>💶 Finance & Scenarios</h1><p>net profit by channel at three volumes, plus a quick margin calculator.</p></div></div>`;
+ h+=`<div class="card" style="margin-bottom:16px"><h3>Net profit by scenario</h3><div class="tablewrap"><table><thead><tr><th>Channel</th><th>225 bags</th><th>850 bags</th><th>1,500 bags</th></tr></thead><tbody>`;
+ sc.forEach(s=>h+=`<tr style="cursor:default"><td><b>${s.name}</b> <span class="chip ${s.badge}">${s.margin}</span></td><td style="text-align:right">${money(s.rows[225])}</td><td style="text-align:right">${money(s.rows[850])}</td><td style="text-align:right">${money(s.rows[1500])}</td></tr>`);
+ h+=`</tbody></table></div></div>`;
+ h+=`<div class="grid g3" style="margin-bottom:16px">`;
+ sc.forEach(s=>h+=`<div class="card"><h3>${s.name}</h3><div style="font-size:13px;color:var(--muted);margin-bottom:10px">${s.detail}</div>
+   ${Object.entries(s.rows).map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)"><span class="rowmuted">${Number(k).toLocaleString()} bags</span><b>${money(v)}</b></div>`).join('')}</div>`);
+ h+=`</div>`;
+ // margin calculator
+ h+=`<div class="card"><h3>Margin calculator</h3>
+   <div class="grid g3"><div class="field"><label>Sell price (€)</label><input id="mc_p" type="number" value="29.95" oninput="calcMargin()"></div>
+   <div class="field"><label>Cost / bag (€)</label><input id="mc_c" type="number" value="18.84" oninput="calcMargin()"></div>
+   <div class="field"><label>Units</label><input id="mc_u" type="number" value="225" oninput="calcMargin()"></div></div>
+   <div id="mc_out" class="grid g3" style="margin-top:6px"></div></div>`;
+ setTimeout(calcMargin,0);
+ return h;
+}
+function calcMargin(){const p=num($('#mc_p').value),c=num($('#mc_c').value),u=num($('#mc_u').value);
+ const per=p-c,marg=p?(per/p*100):0,net=per*u;
+ $('#mc_out').innerHTML=stat('Margin / bag',money(per),marg.toFixed(1)+'% margin')+stat('Net profit',money(net),u+' units')+stat('Gross revenue',money(p*u),'');
+}
+
+/* ---------- METRICS ---------- */
+function renderMetrics(){
+ const inv=Store.list('inventory');const totalBags=inv.reduce((a,i)=>a+num(i.bags),0);
+ const allSales=Store.list('sales');const rev=allSales.reduce((a,s)=>a+num(s.qty)*num(s.unitPrice),0);const units=allSales.reduce((a,s)=>a+num(s.qty),0);
+ let h=`<div class="page-head"><div><h1>📊 Metrics</h1><p>your numbers in one place. live integrations (ga4, meta, shopify) connect in the next step - for now embed a dashboard or track manually.</p></div>
+   <button class="btn ghost" data-action="openform" data-coll="kpis">＋ Manual KPI</button></div>`;
+ h+=`<div class="grid g4" style="margin-bottom:14px">${stat('Lifetime revenue',money(rev),units+' bags sold')}${stat('Bags remaining',totalBags,'')}${stat('Email contacts',Store.list('contacts').length,'')}${stat('B2B prospects',Store.list('b2b').length,'')}`;
+ Store.list('kpis').forEach(k=>h+=`<div class="stat" data-action="openform" data-coll="kpis" data-id="${k.id}" style="cursor:pointer"><div class="lbl">${esc(k.label)}</div><div class="val">${esc(k.value||'—')}</div><div class="sub">${esc(k.sub||'')}</div></div>`);
+ h+=`</div>`;
+ const emb=Store.list('embeds');
+ h+=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><h3 style="margin:0">🖥️ Embedded dashboards</h3><button class="btn ghost sm" data-action="openform" data-coll="embeds">＋ Add dashboard</button></div>`;
+ if(!emb.length)h+=`<p class="rowmuted">Add a Google Analytics, Looker Studio, Meta or Shopify share link to embed a live dashboard here.</p>`;
+ else emb.forEach(e=>h+=`<div style="margin:10px 0"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><b>${esc(e.name)}</b><button class="del" data-action="del" data-coll="embeds" data-id="${e.id}">remove</button></div><iframe src="${esc(e.url)}" style="width:100%;height:420px;border:1px solid var(--border);border-radius:12px"></iframe></div>`);
+ h+=`</div>`;
+ return h;
+}
+
+/* ---------- CONTENT ---------- */
+function renderContent(){
+ const pillars=Store.list('pillars');const ideas=Store.list('ideas');
+ let h=`<div class="page-head"><div><h1>🎬 Content</h1><p>pillars, idea inbox and a production board. capture ideas before they die in voice notes.</p></div>
+   <button class="btn" data-action="openform" data-coll="ideas">＋ Content idea</button></div>`;
+ h+=`<div class="card" style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">Content pillars</h3><button class="btn ghost sm" data-action="addpillar">＋ Pillar</button></div>
+   <div class="pillrow" style="margin-top:10px">`;
+ pillars.forEach(p=>h+=`<span class="chip">${esc(p.name)} <span data-action="delpillar" data-id="${p.id}" style="cursor:pointer;color:var(--muted)">✕</span></span>`);
+ h+=`</div></div>`;
+ h+=`<div class="card" style="margin-bottom:16px"><h3>Production board</h3>`;
+ h+=ideas.length?board('ideas',ideas):`<p class="rowmuted">No ideas yet. Add the first one.</p>`;
+ h+=`</div>`;
+ // compliance checklist
+ const rules=['No "ritual" anywhere','No em dashes','No exclamation marks','English only','Lowercase favored','Hormone copy outcome-framed','No unverified / medical claims','One accent color per asset'];
+ h+=`<div class="card"><h3>✓ Brand compliance checklist (run before posting)</h3>`;
+ rules.forEach(r=>h+=`<div class="checkitem"><span class="x">✓</span><span>${r}</span></div>`);
+ h+=`</div>`;
+ return h;
+}
+
+/* ---------- EMAIL & CONTACTS ---------- */
+let emailView='all';
+function renderEmail(){
+ const all=Store.list('contacts');
+ const views={all:c=>true,buyers:c=>c.lastPurchase,lapsed:c=>c.lastPurchase&&daysTo(c.lastPurchase)<-60,
+   high:c=>num(c.totalSpend)>=100,new:c=>!c.lastPurchase};
+ const items=all.filter(views[emailView]);
+ let h=`<div class="page-head"><div><h1>📧 Email & Contacts</h1><p>every subscriber and buyer, with source and purchase history. klaviyo / csv import ready.</p></div>
+   <div style="display:flex;gap:8px"><button class="btn ghost" data-action="importcsv">Import CSV</button><button class="btn" data-action="openform" data-coll="contacts">＋ Contact</button></div></div>`;
+ const segs=[['all','All'],['buyers','Buyers'],['lapsed','Lapsed 60d+'],['high','High value €100+'],['new','Signups, no purchase']];
+ h+=`<div class="toolbar"><div class="seg">`+segs.map(s=>`<button class="${emailView===s[0]?'active':''}" data-action="eview" data-v="${s[0]}">${s[1]} ${all.filter(views[s[0]]).length}</button>`).join('')+`</div></div>`;
+ h+=items.length?tableHTML('contacts',items):empty(COLS.contacts,'contacts');
+ return h;
+}
+
+/* ---------- AD ANGLES ---------- */
+function renderAdAngles(){
+ const items=Store.list('adangles');
+ let h=`<div class="page-head"><div><h1>🎯 Ad Angles</h1><p>a library of static ad angles by category and format. build once, reuse forever, track what is live.</p></div>
+   <button class="btn" data-action="openform" data-coll="adangles">＋ Ad angle</button></div>`;
+ // by category
+ ANGLE_CATS.forEach(cat=>{const list=items.filter(i=>i.category===cat);
+   h+=`<div class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h3 style="margin:0">${cat}</h3><button class="btn ghost sm" data-action="openangle" data-cat="${cat}">＋ Add</button></div>`;
+   if(!list.length)h+=`<p class="rowmuted" style="margin:0">No angles yet in this category.</p>`;
+   else{h+=`<div class="pillrow" style="flex-direction:column;gap:8px">`;
+     list.forEach(a=>h+=`<div class="bcard" style="margin:0;display:flex;justify-content:space-between;align-items:center" data-action="openform" data-coll="adangles" data-id="${a.id}">
+       <span><b>${esc(a.hook)}</b> <span class="chip n">${esc(a.format||'')}</span> ${a.product?`<span class="chip">${esc(a.product)}</span>`:''}</span>
+       <span class="chip ${chipColor(a.status||'')}">${esc(a.status||'idea')}</span></div>`);
+     h+=`</div>`;}
+   h+=`</div>`;});
+ return h;
+}
+
+/* ---------- NOTES ---------- */
+let notesFilter='all';
+function renderNotes(){
+ const all=Store.list('notes');
+ const items=notesFilter==='all'?all:all.filter(n=>n.tag===notesFilter);
+ let h=`<div class="page-head"><div><h1>📝 Notes</h1><p>diana's space. write a thought, tag it, close it. zero friction.</p></div>
+   <button class="btn" data-action="quicknote">＋ New note</button></div>`;
+ h+=`<div class="card" style="margin-bottom:16px"><textarea id="quickNoteBox" placeholder="capture a thought…" style="width:100%;border:1px solid var(--border2);border-radius:12px;padding:13px;min-height:70px;font-size:16px"></textarea>
+   <div style="display:flex;gap:8px;margin-top:10px;align-items:center"><select id="quickNoteTag" class="mini"><option>idea</option><option>content</option><option>observation</option><option>follow-up</option></select>
+   <button class="btn sm" data-action="savequicknote">Save note</button></div></div>`;
+ const tags=['all','idea','content','observation','follow-up'];
+ h+=`<div class="toolbar"><div class="seg">`+tags.map(t=>`<button class="${notesFilter===t?'active':''}" data-action="nfilter" data-t="${t}">${t}</button>`).join('')+`</div></div>`;
+ if(!items.length)h+=`<div class="empty"><div class="big">📝</div><p>No notes yet.</p></div>`;
+ else{h+=`<div class="grid g2">`;
+   items.slice().reverse().forEach(n=>h+=`<div class="note-card" data-action="openform" data-coll="notes" data-id="${n.id}"><div>${esc(n.text)}</div>
+     <div class="meta"><span class="chip n">${esc(n.tag||'note')}</span><span>${esc(n.author||'')} ${n._created?'· '+n._created.slice(0,10):''}</span></div></div>`);
+   h+=`</div>`;}
+ return h;
+}
+
+/* ---------- FOUNDER OPS ---------- */
+let foTab='roi';
+function renderFounderOps(){
+ const tabs=[['roi','Channel ROI'],['schedule','Production schedule'],['events','Events'],['competitors','Competitors'],['quickwins','Quick wins'],['assets','Assets'],['latam','LatAm'],['links','Links'],['higgs','Higgsfield']];
+ let h=`<div class="page-head"><div><h1>🚀 Growth & Ops</h1><p>the founder layer: roi, reorder timing, events, competitor moves, quick wins and your tool links.</p></div></div>`;
+ h+=`<div class="subtabs">`+tabs.map(t=>`<button class="${foTab===t[0]?'active':''}" data-action="fotab" data-t="${t[0]}">${t[1]}</button>`).join('')+`</div>`;
+ h+=foContent(foTab);
+ return h;
+}
+function foContent(t){
+ if(t==='roi'){const ch=Store.list('channels');
+   let h=`<div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn ghost sm" data-action="openform" data-coll="channels">＋ Channel</button></div>`;
+   h+=tableHTML('channels',ch);return h;}
+ if(t==='schedule'){let h=`<div class="card"><h3>Reorder & next production</h3><div class="tablewrap"><table><thead><tr><th>SKU</th><th>Bags left</th><th>Velocity /day</th><th>Days left</th><th>Suggested action</th></tr></thead><tbody>`;
+   Store.list('inventory').forEach(i=>{const v=velocity(i.sku);const d=daysOfStock(i);
+     h+=`<tr style="cursor:default"><td><b>${esc(i.name)}</b></td><td style="text-align:right">${i.bags}</td><td style="text-align:right">${v.toFixed(2)}</td><td style="text-align:right">${d!=null?d:'—'}</td><td style="text-align:right">${i.bags<=i.reorderAt?'<b style="color:var(--bad)">reorder now</b>':d!=null&&d<30?'plan next batch':'ok'}</td></tr>`;});
+   h+=`</tbody></table></div><div class="rulebox" style="margin-top:12px">Lead time with Kaffetoo (Gonzalo) plus adaptogen reorder of Ashwagandha + Cordyceps drives the next batch date. Keep ≥30 days of stock buffer.</div></div>`;return h;}
+ if(t==='higgs'){const tpl=ANGLE_CATS.map(c=>`<div class="bcard" style="margin:0 0 8px"><b>${c}</b><div class="m" style="color:var(--muted)">"feel - ${c} angle, ${'{product}'}, cream #EDDDC6 base, product accent dominant, flat matte, no gradients, helvetica neue bold headline, lowercase, english copy, no exclamation."</div><button class="btn ghost sm" data-action="copytpl" data-c="${c}" style="margin-top:8px">Copy prompt</button></div>`).join('');
+   return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">Higgsfield prompt templates</h3><a class="btn ghost sm" href="https://higgsfield.ai" target="_blank">Open Higgsfield ↗</a></div><p class="rowmuted" style="margin:8px 0 14px">one starter prompt per angle, on-brand by default. tweak {product} then paste into Higgsfield.</p>${tpl}</div>`;}
+ // generic collections: events, competitors, quickwins, assets, latam, links
+ const c=t;let h=`<div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn ghost sm" data-action="openform" data-coll="${c}">＋ Add ${COLS[c].label}</button></div>`;
+ const items=Store.list(c);
+ if(COLS[c].board&&items.length)h+=board(c,items);
+ else h+=items.length?tableHTML(c,items):empty(COLS[c],c);
+ return h;
+}
+
+/* ============================================================ FORMS / MODALS ============================================================ */
+function modalOpen(html){$('#modalRoot').innerHTML=`<div class="overlay" id="overlayBg">${html}</div>`;}
+function modalClose(){$('#modalRoot').innerHTML='';}
+function openForm(c,id){
+ const cfg=COLS[c];const it=id?Store.get(c,id):{};
+ let h=`<div class="modal"><h2>${id?'Edit':'New'} ${cfg.label}</h2><div class="sub">${id?'update the fields and save.':'fill what you have. nothing is mandatory except the first field.'}</div><form id="mf">`;
+ cfg.fields.forEach(f=>{const opts=typeof f.opts==='function'?f.opts():f.opts;
+   const v=it[f.k]!=null?it[f.k]:'';
+   h+=`<div class="field"><label>${f.l}${f.req?' *':''}</label>`;
+   if(f.t==='textarea')h+=`<textarea name="${f.k}">${esc(v)}</textarea>`;
+   else if(f.t==='select')h+=`<select name="${f.k}"><option value=""></option>${opts.map(o=>`<option ${v===o?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
+   else h+=`<input name="${f.k}" type="${f.t}" value="${esc(v)}" ${f.req?'required':''}>`;
+   h+=`</div>`;});
+ h+=`<div class="modal-actions">`;
+ if(id)h+=`<button type="button" class="btn ghost" data-action="del" data-coll="${c}" data-id="${id}">Delete</button>`;
+ h+=`<button type="button" class="btn ghost" data-action="overlay">Cancel</button><button type="submit" class="btn">Save</button></div></form></div>`;
+ modalOpen(h);
+ $('#mf').addEventListener('submit',e=>{e.preventDefault();
+   const fd=new FormData(e.target);const obj=id?{...it}:{};
+   cfg.fields.forEach(f=>obj[f.k]=fd.get(f.k));
+   Store.upsert(c,obj).then(()=>{modalClose();render();toast(`${cfg.label} saved.`);});
+ });
+}
+function openSale(){
+ const inv=Store.list('inventory');
+ let h=`<div class="modal"><h2>Log a sale</h2><div class="sub">stock drops automatically when you save.</div><form id="mf">
+   <div class="field"><label>Product *</label><select name="sku" required>${inv.map(i=>`<option value="${i.sku}">${esc(i.name)} (${i.bags} left)</option>`).join('')}</select></div>
+   <div class="field half"><label>Quantity *</label><input name="qty" type="number" value="1" min="1" required></div>
+   <div class="field half"><label>Unit price (€)</label><input name="unitPrice" type="number" value="29.95" step="0.01"></div>
+   <div class="field"><label>Channel</label><select name="channel"><option>D2C</option><option>wholesale</option><option>event</option><option>other</option></select></div>
+   <div class="field"><label>Date</label><input name="date" type="date" value="${todayISO()}"></div>
+   <div class="modal-actions"><button type="button" class="btn ghost" data-action="overlay">Cancel</button><button type="submit" class="btn">Log sale</button></div></form></div>`;
+ modalOpen(h);
+ $('#mf').addEventListener('submit',async e=>{e.preventDefault();const fd=new FormData(e.target);
+   const sku=fd.get('sku'),qty=num(fd.get('qty'));
+   await Store.upsert('sales',{sku,qty,unitPrice:num(fd.get('unitPrice')),channel:fd.get('channel'),date:fd.get('date')});
+   const i=Store.list('inventory').find(x=>x.sku===sku);if(i){i.bags=Math.max(0,num(i.bags)-qty);await Store.upsert('inventory',i);}
+   modalClose();render();toast('Sale logged, stock updated.');});
+}
+function openEditInv(id){const i=Store.get('inventory',id);
+ let h=`<div class="modal"><h2>Edit ${esc(i.name)}</h2><form id="mf">
+   <div class="field half"><label>Bags in stock</label><input name="bags" type="number" value="${i.bags}"></div>
+   <div class="field half"><label>Reorder at</label><input name="reorderAt" type="number" value="${i.reorderAt}"></div>
+   <div class="modal-actions"><button type="button" class="btn ghost" data-action="overlay">Cancel</button><button type="submit" class="btn">Save</button></div></form></div>`;
+ modalOpen(h);
+ $('#mf').addEventListener('submit',e=>{e.preventDefault();const fd=new FormData(e.target);
+   i.bags=num(fd.get('bags'));i.reorderAt=num(fd.get('reorderAt'));
+   Store.upsert('inventory',i).then(()=>{modalClose();render();});});
+}
+function openData(){
+ const connected=!!Store.client;
+ let h=`<div class="modal"><h2>Data & sync</h2><div class="sub">${connected?'connected to supabase. data is shared live across devices.':'currently local only. connect supabase to share with diana.'}</div>
+   <div class="field"><label>Supabase project URL</label><input id="su_url" type="url" placeholder="https://xxxx.supabase.co" value="${esc(Store.cfg?.url||'')}"></div>
+   <div class="field"><label>Supabase anon public key</label><input id="su_key" type="text" placeholder="eyJhbGci..." value="${esc(Store.cfg?.key||'')}"></div>
+   <div class="modal-actions"><button type="button" class="btn" data-action="saveSupa">${connected?'Reconnect':'Connect'}</button></div>
+   <div style="margin-top:8px;display:flex;gap:8px"><button class="btn ghost sm" data-action="exp">Export backup</button><button class="btn ghost sm" data-action="imp">Import backup</button>${connected?'<button class="btn ghost sm" data-action="disc">Disconnect</button>':''}</div>
+   <p class="rowmuted" style="font-size:12px;margin-top:12px">Run the supabase-schema.sql file once in your Supabase SQL editor before connecting. Backups are JSON of everything in the app.</p></div>`;
+ modalOpen(h);
+}
+
+/* ---------- search ---------- */
+function runSearch(q){
+ q=q.trim().toLowerCase();if(!q){closeSearch();return;}
+ const res=[];
+ for(const c in COLS){Store.list(c).forEach(it=>{
+   const hay=Object.values(it).join(' ').toLowerCase();
+   if(hay.includes(q))res.push({c,it});});}
+ // brand hub text
+ let h=`<div class="searchres" id="searchRes">`;
+ if(!res.length)h+=`<div class="sr-item"><span class="rowmuted">No matches for "${esc(q)}"</span></div>`;
+ else res.slice(0,30).forEach(r=>h+=`<div class="sr-item" data-action="srgo" data-coll="${r.c}" data-id="${r.it.id}"><span class="ic">${COLS[r.c].icon}</span><span style="flex:1"><b>${esc(r.it[COLS[r.c].primary]||'item')}</b><div style="font-size:12px;color:var(--muted)">${COLS[r.c].label}</div></span></div>`);
+ h+=`</div>`;
+ const old=$('#searchRes');if(old)old.remove();
+ $('#search').style.position='relative';$('#search').insertAdjacentHTML('beforeend',h);
+}
+function closeSearch(){const r=$('#searchRes');if(r)r.remove();}
+
+/* ---------- toast ---------- */
+function toast(msg){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#000;color:#fff;padding:12px 20px;border-radius:12px;font-weight:600;z-index:200;box-shadow:0 8px 30px rgba(0,0,0,.3);font-size:14px';document.body.appendChild(t);}
+ t.textContent=msg;t.style.opacity='1';clearTimeout(t._t);t._t=setTimeout(()=>t.style.opacity='0',2400);}
+
+/* ---------- side toggle (mobile) ---------- */
+function openSide(){$('#side').classList.add('open');if(!$('.scrim')){const s=document.createElement('div');s.className='scrim';s.onclick=closeSide;document.body.appendChild(s);}}
+function closeSide(){$('#side').classList.remove('open');const s=$('.scrim');if(s)s.remove();}
+
+/* ============================================================ EVENTS ============================================================ */
+document.addEventListener('click',e=>{
+ if(e.target.classList&&e.target.classList.contains('overlay')){modalClose();return;}
+ const t=e.target.closest('[data-action]');
+ if(!t){if(!e.target.closest('#search'))closeSearch();return;}
+ const a=t.dataset.action,c=t.dataset.coll,id=t.dataset.id;
+ switch(a){
+   case 'openform':openForm(c,id);break;
+   case 'logsale':openSale();break;
+   case 'editinv':openEditInv(id);break;
+   case 'recount':toast('Tap a product’s ✎ to set the real count.');location.hash='inventory';break;
+   case 'del':if(confirm('Delete this entry?')){Store.remove(c,id).then(()=>{modalClose();render();});}break;
+   case 'overlay':modalClose();break;
+   case 'data-menu':openData();break;
+   case 'saveSupa':{const u=$('#su_url').value.trim(),k=$('#su_key').value.trim();if(!u||!k){toast('Paste both URL and key.');break;}modalClose();Store.connect(u,k);break;}
+   case 'disc':Store.disconnect();modalClose();render();toast('Disconnected. Back to local only.');break;
+   case 'exp':{const blob=new Blob([Store.exportJSON()],{type:'application/json'});const a2=document.createElement('a');a2.href=URL.createObjectURL(blob);a2.download='feel-os-backup.json';a2.click();break;}
+   case 'imp':{const inp=document.createElement('input');inp.type='file';inp.accept='.json';inp.onchange=ev=>{const f=ev.target.files[0];const r=new FileReader();r.onload=()=>{try{Store.importJSON(r.result);modalClose();toast('Backup imported.');}catch(x){toast('Bad file.');}};r.readAsText(f);};inp.click();break;}
+   case 'btab':brandTab=t.dataset.t;render();break;
+   case 'fotab':foTab=t.dataset.t;render();break;
+   case 'eview':emailView=t.dataset.v;render();break;
+   case 'nfilter':notesFilter=t.dataset.t;render();break;
+   case 'vmode':viewMode[c]=t.dataset.m;render();break;
+   case 'quicknote':location.hash='notes';setTimeout(()=>{$('#quickNoteBox')?.focus();},60);break;
+   case 'savequicknote':{const txt=$('#quickNoteBox').value.trim();if(!txt){toast('Write something first.');break;}Store.upsert('notes',{text:txt,tag:$('#quickNoteTag').value,author:'Diana'}).then(()=>{render();toast('Note saved.');});break;}
+   case 'addpillar':{const n=prompt('New content pillar:');if(n)Store.upsert('pillars',{name:n}).then(render);break;}
+   case 'delpillar':Store.remove('pillars',id).then(render);break;
+   case 'openangle':openForm('adangles');setTimeout(()=>{const s=document.querySelector('#mf [name=category]');if(s)s.value=t.dataset.cat;},40);break;
+   case 'copytpl':{const txt=`feel - ${t.dataset.c} angle, {product}, cream #EDDDC6 base, product accent dominant, flat matte, no gradients, helvetica neue bold headline, lowercase english copy, no exclamation.`;navigator.clipboard?.writeText(txt);toast('Prompt copied.');break;}
+   case 'srgo':closeSearch();$('#searchInput').value='';openForm(c,id);break;
+   case 'importcsv':{const inp=document.createElement('input');inp.type='file';inp.accept='.csv,text/csv';inp.onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=async()=>{const rows=parseCSV(r.result);if(!rows.length){toast('No valid rows (need an email column).');return;}let n=0;for(const row of rows){await Store.upsert('contacts',row);n++;}render();toast(n+' contacts imported.');};r.readAsText(f);};inp.click();break;}
+ }
+});
+$('#burger').addEventListener('click',()=>{$('#side').classList.contains('open')?closeSide():openSide();});
+$('#searchInput').addEventListener('input',e=>runSearch(e.target.value));
+
+/* ---------- boot ---------- */
+Store.init();
+if(!location.hash)location.hash='home';
+render();
+</script>
+</body>
+</html>
